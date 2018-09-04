@@ -1,12 +1,8 @@
 import React, {Component} from 'react'
-import PropTypes from 'prop-types'
+import PubSub from 'pubsub-js'
 import axios from 'axios'
 
 export default class UserList extends Component {
-
-    static PropTypes = {
-        username: PropTypes.string.isRequired
-    }
 
     constructor(props) {
         super(props)
@@ -18,34 +14,35 @@ export default class UserList extends Component {
         }
     }
 
-    // 方法异步化
-    async componentWillReceiveProps(nextProps) {
-        let {username} = nextProps
-        console.log("start get userList , params : " + username)
-        const url = `https://api.github.com/search/users?q=${username}`
-        this.setState({initView: false, loadingView: true})
-        axios.get(url)
-            .then(response => {
-                const result = response.data
+    // 页面加载好，就立刻订阅消息
+    componentDidMount() {
+        PubSub.subscribe("search", (msg, username) => {
+            console.log("start get userList , params : " + username)
+            const url = `https://api.github.com/search/users?q=${username}`
+            this.setState({initView: false, loadingView: true})
+            axios.get(url)
+                .then(response => {
+                    const result = response.data
 
-                let users = result.items.map(item => (
-                    {
-                        html_url: item.html_url,
-                        avatar_url: item.avatar_url,
-                        login: item.login
-                    }
-                ))
-                this.setState({
-                    loadingView: false,
-                    users
+                    let users = result.items.map(item => (
+                        {
+                            html_url: item.html_url,
+                            avatar_url: item.avatar_url,
+                            login: item.login
+                        }
+                    ))
+                    this.setState({
+                        loadingView: false,
+                        users
+                    })
                 })
-            })
-            .catch(error => {
-                this.setState({
-                    loadingView: false,
-                    errorMsg: true
+                .catch(error => {
+                    this.setState({
+                        loadingView: false,
+                        errorMsg: true
+                    })
                 })
-            })
+        })
     }
 
     render() {
@@ -59,9 +56,8 @@ export default class UserList extends Component {
             return (
                 <div className="row">
                     {
-                        this.state.users.map((user) => (
-                            <div className="col-md-3">
-
+                        this.state.users.map((user, index) => (
+                            <div className="col-md-3" key={index}>
                                 <div className="card" key={user.html_url}>
                                     <a href={user.html_url} target="_blank">
                                         <img src={user.avatar_url} style={{width: '100px'}} alt='user'/>

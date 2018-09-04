@@ -1,18 +1,14 @@
 import React, {Component} from 'react'
-import PropTypes from 'prop-types'
+import PubSub from 'pubsub-js'
 
 export default class SearchUser extends Component{
-
-    static PropTypes = {
-        refreshName: PropTypes.func.isRequired
-    }
 
     searchClick = () => {
         // 接受数据
         let username = this.username.value
-        // 上报数据
+        // 推送消息
         if (username && username.length > 0) {
-            this.props.refreshName(username)
+            PubSub.publish("search", username)
         }
     }
 
